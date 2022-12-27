@@ -1,5 +1,6 @@
 import pygame
 from random import randint
+from class_Network import Network
 
 net_map = {
 	"a":["b", "c", "f"],
@@ -11,13 +12,6 @@ net_map = {
 	"g":["d"],
 	"h":["c"],
 }
-
-class Node:
-	def __init__(self, label, x, y, radius):
-		self.label = label
-		self.pos = (x, y)
-		self.radius = radius
-		self.connections = []
 
 def main():
 	# Initialise pygame settings
@@ -33,37 +27,52 @@ def main():
 	bg.fill((20, 20, 20))
 
 	# Initialising the nodes.
-	nodes = []
-	for key in net_map.keys():
-		nodes.append(Node(key, randint(0, WIDTH), randint(0, HEIGHT), 15))
+	network = Network(net_map, WIDTH, HEIGHT)
 
-	for node in nodes:
-		connections = []
-		for value in net_map[node.label]:
-			for nodecheck in nodes:
-				if nodecheck.label == value:
-					connections.append(nodecheck)
-		node.connections = connections
-
-
+	mouse_down = False
+	start_end = False
 	while True:
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				pygame.quit()
 				exit()
+			if event.type == pygame.MOUSEBUTTONDOWN and network.is_editing:
+				mouse_down = True
+			if event.type == pygame.MOUSEBUTTONUP:
+				if network.is_editing:
+					network.mobility_reset()
+				elif network.is_selecting:
+					start_end = True
+			if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_SPACE:
+					network.is_selecting = network.is_editing
+					network.is_editing = not network.is_editing
+					network.start, network.end, network.path = None, None, None
 
 		screen.blit(bg, (0, 0))
 
-		for node in nodes:
-			for connection in node.connections:
-				pygame.draw.aaline(screen, (150,150,150), node.pos, connection.pos)
+		# Displaying the connections between the nodes.
+		for key in network.nodes.keys():
+			for node in network.nodes[key].connections:
+				pygame.draw.aaline(screen, (150,150,150), network.nodes[key].pos, network.nodes[node].pos)
 
-		for node in nodes:
-			pygame.draw.circle(screen, (255,255,255), node.pos, node.radius)
-			text = font.render(node.label, True, (0,0,0))
+		if network.path:
+			for i in range(0, len(network.path)-1):
+				posA = network.nodes[network.path[i]].pos
+				posB = network.nodes[network.path[i+1]].pos
+				pygame.draw.line(screen, (255,255,0), posA, posB, 5)
+
+		# Displaying the nodes and their labels.
+		for key in network.nodes.keys():
+			pygame.draw.circle(screen, (255,255,255), network.nodes[key].pos, network.nodes[key].radius)
+			text = font.render(network.nodes[key].label, True, (0,0,0))
 			textRect = text.get_rect()
-			textRect.center = node.pos
+			textRect.center = network.nodes[key].pos
 			screen.blit(text, textRect)
+
+		mouse_position = pygame.mouse.get_pos()
+		network.update(mouse_position, mouse_down, start_end)
+		mouse_down, start_end = False, False
 
 		pygame.display.update()
 		clock.tick(30)
