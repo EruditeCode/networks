@@ -1,3 +1,5 @@
+# A Network class to support the network visualisation program. 
+
 from class_Node import Node
 from random import randint
 from collections import deque
@@ -30,7 +32,6 @@ class Network:
 
 		if self.start and self.end:
 			self.path = self.find_path(self.start, self.end)
-			print(self.path)
 			self.start, self.end = None, None
 
 	def mobility_reset(self):
