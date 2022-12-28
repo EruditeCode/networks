@@ -1,3 +1,7 @@
+# A simple UI to visualise networks and perform pathfinding from an adjacency list.
+
+# Video Walkthrough Link: https://www.youtube.com/watch?v=Tfh6nPePl0s
+
 import pygame
 from random import randint
 from class_Network import Network
@@ -18,15 +22,15 @@ def main():
 	pygame.init()
 	WIDTH, HEIGHT = 800, 400
 	screen = pygame.display.set_mode((WIDTH, HEIGHT))
-	pygame.display.set_caption("Visual Sorts")
+	pygame.display.set_caption("Visual Networks")
 	clock = pygame.time.Clock()
 	font = pygame.font.Font(None, 20)
 
-	# Creating the background surfaces for the interface.
+	# Creating the background surface for the interface.
 	bg = pygame.Surface((WIDTH, HEIGHT))
 	bg.fill((20, 20, 20))
 
-	# Initialising the nodes.
+	# Initialising the network.
 	network = Network(net_map, WIDTH, HEIGHT)
 
 	mouse_down = False
