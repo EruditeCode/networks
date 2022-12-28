@@ -1,3 +1,4 @@
+# A Node class to support the network visualisation program. 
 
 class Node:
 	def __init__(self, label, x, y, radius, connections):
