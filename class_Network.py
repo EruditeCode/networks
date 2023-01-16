@@ -5,23 +5,24 @@ from random import randint
 from collections import deque
 
 class Network:
-	def __init__(self, network_map, width, height):
-		self.is_editing = True
-		self.is_selecting = False
+	def __init__(self, network_map, width, height, height_min=0):
+		# 0 = node, 1 = edge, 2 = edit, 3 = path.
+		self.state = 3
+
 		self.start, self.end = None, None
 		self.path = None
 		self.nodes = {}
 		for key in network_map.keys():
-			self.nodes[key] = Node(key, randint(0, width), randint(0, height), 15, network_map[key])
+			self.nodes[key] = Node(key, randint(15, width), randint(height_min+15, height), 15, network_map[key])
 
 	def update(self, mouse_position, mouse_down, start_end):
-		if self.is_editing and mouse_down:
+		if self.state == 2 and mouse_down:
 			for key in self.nodes.keys():
 				self.nodes[key].update_mobility(mouse_position)
-		elif self.is_editing and not mouse_down:
+		elif self.state == 2 and not mouse_down:
 			for key in self.nodes.keys():
 				self.nodes[key].update_position(mouse_position)
-		elif self.is_selecting and start_end:
+		elif self.state == 3 and start_end:
 			for key in self.nodes.keys():
 				if self.nodes[key].is_selected(mouse_position):
 					if self.start == None:
