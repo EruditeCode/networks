@@ -5,57 +5,75 @@ from random import randint
 from collections import deque
 
 class Network:
-	def __init__(self, width, height, height_min=0, network_map={}):
+	def __init__(self, width, height, height_min=0):
 		# 0 = node, 1 = edge, 2 = edit, 3 = path.
 		self.state = 0
 		self.height_min = height_min
-
-		self.start = None
+		self.start, self.select = None, None
 		self.path = None
 		self.nodes = {}
-		for key in network_map.keys():
-			self.nodes[key] = Node(key, randint(15, width), randint(height_min+15, height), 15, network_map[key])
 
-	def update(self, mouse_position, mouse_down, mouse_click):
-		if self.state == 2 and mouse_down:
+	def update(self, mouse_position, mouse_down, mouse_click, click_type):
+		# Update start and select based on click.
+		if mouse_click and self.state != 2:
+			self.check_if_node_selected(mouse_position)
+			if self.start == None:
+				self.start = self.select
+
+		# Adding Nodes.
+		if self.state == 0 and mouse_click and mouse_position[1] > self.height_min:
+			self.add_or_remove_node(mouse_position, click_type)
+		# Adding Edges.
+		elif self.state == 1 and mouse_click and mouse_position[1] > self.height_min:
+			self.add_or_remove_edge(mouse_position, click_type)
+		# Moving Nodes Around.
+		elif self.state == 2 and mouse_down:
 			for key in self.nodes.keys():
 				self.nodes[key].update_mobility(mouse_position)
-		elif self.state == 2 and not mouse_down:
+		elif self.state == 2 and not mouse_down and not mouse_click:
 			for key in self.nodes.keys():
 				self.nodes[key].update_position(mouse_position)
-		elif self.state == 3 and mouse_click:
+		elif self.state == 2 and mouse_click:
 			for key in self.nodes.keys():
-				if self.nodes[key].is_selected(mouse_position):
-					if self.start == None:
-						self.start = key
-					else:
-						self.path = self.find_path(self.start, key)
-						self.start = None
-					break
-		elif self.state == 0 and mouse_click and mouse_position[1] > self.height_min:
-			# Need to add the right click to remove...
-			if self.nodes == {}:
-				num = 0
-				self.nodes[num] = Node(str(num), mouse_position[0], mouse_position[1], 15, [])
-			else:
-				num = max(self.nodes) + 1
-				self.nodes[num] = Node(str(num), mouse_position[0], mouse_position[1], 15, [])
-		elif self.state == 1 and mouse_click and mouse_position[1] > self.height_min:
-			for key in self.nodes.keys():
-				if self.nodes[key].is_selected(mouse_position):
-					if self.start == None:
-						self.start = key
-					else:
-						if self.start != key and key not in self.nodes[self.start].connections:
-							self.nodes[self.start].connections.append(key)
-						if self.start not in self.nodes[key].connections:
-							self.nodes[key].connections.append(self.start)
-						self.start = None
-					break
+				self.nodes[key].is_mobile = False
+		# Pathfinding.
+		elif self.state == 3 and mouse_click and self.start != self.select:
+			self.path = self.find_path(self.start, self.select)
+			self.start = None
 
-	def mobility_reset(self):
+		self.select = None
+
+	def check_if_node_selected(self, mouse_position):
 		for key in self.nodes.keys():
-			self.nodes[key].is_mobile = False
+			if self.nodes[key].is_selected(mouse_position):
+				self.select = key
+
+	def add_or_remove_node(self, mouse_position, click_type):
+		if click_type == 0 and self.nodes == {}:
+			self.nodes[1] = Node("1", mouse_position[0], mouse_position[1], 15, [])
+		elif click_type == 0 and self.nodes:
+			num = max(self.nodes) + 1
+			self.nodes[num] = Node(str(num), mouse_position[0], mouse_position[1], 15, [])
+		elif click_type == 1 and self.nodes and self.select:
+			for key in self.nodes.keys():
+				self.remove_edge_from_connections(self.select, key)
+			del self.nodes[self.select]
+
+	def add_or_remove_edge(self, mouse_position, click_type):
+		if click_type == 0 and self.start != self.select:
+			if self.select not in self.nodes[self.start].connections:
+				self.nodes[self.start].connections.append(self.select)
+			if self.start not in self.nodes[self.select].connections:
+				self.nodes[self.select].connections.append(self.start)
+			self.start = None
+		elif click_type == 1 and self.start != self.select:
+			self.remove_edge_from_connections(self.start, self.select)
+			self.remove_edge_from_connections(self.select, self.start)
+			self.start = None
+
+	def remove_edge_from_connections(self, node_start, node_end):
+		if node_start in self.nodes[node_end].connections:
+			self.nodes[node_end].connections.remove(node_start)
 
 	def search(self, start, end):
 		queue, visited = deque([start]), []
