@@ -3,17 +3,6 @@ from random import randint
 from class_Network import Network
 from class_Utilities import Button
 
-net_map = {
-	"a":["b", "c", "f"],
-	"b":["a", "d", "e"],
-	"c":["a", "h"],
-	"d":["b", "g"],
-	"e":["b", "f"],
-	"f":["a", "e"],
-	"g":["d"],
-	"h":["c"],
-}
-
 def main():
 	# Initialise pygame settings
 	pygame.init()
@@ -30,20 +19,18 @@ def main():
 	menu.fill((100,100,100))
 
 	# Initialising the network.
-	network = Network(net_map, WIDTH, HEIGHT, 100)
+	network = Network(WIDTH, HEIGHT, 100)
 
-	# Creating the buttons. # Make this into a list!
-	state_to_buttons = {0:"Node",1:"Edge",2:"Move",3:"Path"}
-	buttons = {}
-	buttons["Node"] = Button("Node", 25, 25, 50, 50, True)
-	buttons["Edge"] = Button("Edge", 90, 25, 50, 50)
-	buttons["Move"] = Button("Move", 155, 25, 50, 50)
-	buttons["Path"] = Button("Path", 220, 25, 50, 50)
+	# Creating the buttons.
+	buttons = []
+	buttons.append(Button("NODE", 25, 25, 50, 50, True))
+	buttons.append(Button("EDGE", 90, 25, 50, 50))
+	buttons.append(Button("MOVE", 155, 25, 50, 50))
+	buttons.append(Button("PATH", 220, 25, 50, 50))
 	btn_surface = pygame.Surface((50,50))
 
-
 	mouse_down = False
-	start_end = False
+	mouse_click = False
 	while True:
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
@@ -52,37 +39,35 @@ def main():
 			if event.type == pygame.MOUSEBUTTONDOWN and network.state == 2:
 				mouse_down = True
 			if event.type == pygame.MOUSEBUTTONUP:
-				# Check a series of buttons in the header...
+				mouse_click = True
+				mouse_position = pygame.mouse.get_pos()
+				for index, button in enumerate(buttons):
+					if button.check_click(mouse_position):
+						network.state = index
+						network.start, network.path = None, None
 				if network.state == 2:
 					network.mobility_reset()
-				elif network.state == 3:
-					start_end = True
-			if event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_SPACE:
-					if network.state == 2:
-						network.state = 3
-					elif network.state == 3:
-						network.state = 2
-					network.start, network.end, network.path = None, None, None
 
 		# Update buttons.
-		for key in buttons.keys():
-			if key == state_to_buttons[network.state]:
-				buttons[key].status = True
-			else:
-				buttons[key].status = False
+		for button in buttons:
+			button.status = False
+		buttons[network.state].status = True
 
 		screen.blit(bg, (0, 0))
 		screen.blit(menu, (0, 0))
 
 		# Displaying buttons.
-		for key in buttons.keys():
-			if buttons[key].status:
+		for button in buttons:
+			if button.status:
 				color = (255, 110, 40)
 			else:
 				color = (0, 86, 62)
 			btn_surface.fill(color)
-			screen.blit(btn_surface, buttons[key].pos)
+			screen.blit(btn_surface, button.pos)
+			text = font.render(button.text, True, (255,255,255))
+			textRect = text.get_rect()
+			textRect.center = (button.pos[0]+25, button.pos[1]+25)
+			screen.blit(text, textRect)
 
 		# Displaying the connections between the nodes.
 		for key in network.nodes.keys():
@@ -104,8 +89,8 @@ def main():
 			screen.blit(text, textRect)
 
 		mouse_position = pygame.mouse.get_pos()
-		network.update(mouse_position, mouse_down, start_end)
-		mouse_down, start_end = False, False
+		network.update(mouse_position, mouse_down, mouse_click)
+		mouse_down, mouse_click = False, False
 
 		pygame.display.update()
 		clock.tick(30)
