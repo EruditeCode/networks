@@ -10,13 +10,20 @@ def main():
 	screen = pygame.display.set_mode((WIDTH, HEIGHT))
 	pygame.display.set_caption("Visual Networks")
 	clock = pygame.time.Clock()
-	font = pygame.font.Font(None, 20)
 
 	# Creating the background surface for the interface.
 	bg = pygame.Surface((WIDTH, HEIGHT))
 	bg.fill((20, 20, 20))
 	menu = pygame.Surface((WIDTH, 100))
 	menu.fill((100,100,100))
+
+	# Function to assist with displaying text.
+	def draw_text(text, size, x, y, color):
+		font = pygame.font.Font(None, size)
+		text_surface = font.render(text, True, color)
+		text_rect = text_surface.get_rect()
+		text_rect.center = (x, y)
+		screen.blit(text_surface, text_rect)
 
 	# Initialising the network.
 	network = Network(WIDTH, HEIGHT, 100)
@@ -28,6 +35,10 @@ def main():
 	buttons.append(Button("MOVE", 155, 25, 50, 50))
 	buttons.append(Button("PATH", 220, 25, 50, 50))
 	btn_surface = pygame.Surface((50,50))
+
+	show_weights = True
+	weight_edit = False
+	store_weight = ""
 
 	mouse_down, mouse_click = False, False
 	click_type = 0
@@ -44,6 +55,17 @@ def main():
 				elif event.button == 3:
 					click_type = 1
 				mouse_click = True
+				weight_edit = False
+				if store_weight:
+					network.update_edge_weight(store_weight)
+				store_weight = ""
+			if event.type == pygame.KEYDOWN:
+				if not weight_edit:
+					for label in network.edge_labels:
+						if label.editable == True:
+							weight_edit = True
+				if weight_edit and event.unicode.isdigit():
+					store_weight += str(event.unicode)
 
 		# Update buttons.
 		for button in buttons:
@@ -61,10 +83,7 @@ def main():
 				color = (0, 86, 62)
 			btn_surface.fill(color)
 			screen.blit(btn_surface, button.pos)
-			text = font.render(button.text, True, (255,255,255))
-			textRect = text.get_rect()
-			textRect.center = (button.pos[0]+25, button.pos[1]+25)
-			screen.blit(text, textRect)
+			draw_text(button.text, 20, button.pos[0]+25, button.pos[1]+25, (255,255,255))
 
 		# Displaying the connections between the nodes.
 		for key in network.nodes.keys():
@@ -77,13 +96,17 @@ def main():
 				posB = network.nodes[network.path[i+1]].pos
 				pygame.draw.line(screen, (255,255,0), posA, posB, 5)
 
+		if show_weights:
+			for label in network.edge_labels:
+				if label.editable == True: # Should move the label positions here, not in the class.
+					draw_text(store_weight, 25, label.pos[0], label.pos[1], (240,0,0))
+				else:
+					draw_text(str(label.weight), 25, label.pos[0], label.pos[1], (0,240,0))
+
 		# Displaying the nodes and their labels.
 		for key in network.nodes.keys():
 			pygame.draw.circle(screen, (255,255,255), network.nodes[key].pos, network.nodes[key].radius)
-			text = font.render(network.nodes[key].label, True, (0,0,0))
-			textRect = text.get_rect()
-			textRect.center = network.nodes[key].pos
-			screen.blit(text, textRect)
+			draw_text(network.nodes[key].label, 21, network.nodes[key].pos[0], network.nodes[key].pos[1], (0,0,0))
 
 		mouse_position = pygame.mouse.get_pos()
 		if mouse_click:
