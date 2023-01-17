@@ -35,7 +35,7 @@ class EdgeLabel:
 		self.weight = nodes_dict[self.nodes[0]].weights[self.nodes[1]]
 
 	def check_click(self, click_position):
-		if (self.pos[0] + self.width >= click_position[0] >= self.pos[0] and
-			self.pos[1] + self.height >= click_position[1] >= self.pos[1]):
+		if (self.pos[0] + self.width//2 >= click_position[0] >= self.pos[0] - self.width//2 and
+			self.pos[1] + self.height//2 >= click_position[1] >= self.pos[1] - self.height//2):
 			return True
 		return False
