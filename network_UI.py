@@ -29,8 +29,8 @@ def main():
 	buttons.append(Button("PATH", 220, 25, 50, 50))
 	btn_surface = pygame.Surface((50,50))
 
-	mouse_down = False
-	mouse_click = False
+	mouse_down, mouse_click = False, False
+	click_type = 0
 	while True:
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
@@ -39,14 +39,11 @@ def main():
 			if event.type == pygame.MOUSEBUTTONDOWN and network.state == 2:
 				mouse_down = True
 			if event.type == pygame.MOUSEBUTTONUP:
+				if event.button == 1:
+					click_type = 0
+				elif event.button == 3:
+					click_type = 1
 				mouse_click = True
-				mouse_position = pygame.mouse.get_pos()
-				for index, button in enumerate(buttons):
-					if button.check_click(mouse_position):
-						network.state = index
-						network.start, network.path = None, None
-				if network.state == 2:
-					network.mobility_reset()
 
 		# Update buttons.
 		for button in buttons:
@@ -72,7 +69,7 @@ def main():
 		# Displaying the connections between the nodes.
 		for key in network.nodes.keys():
 			for node in network.nodes[key].connections:
-				pygame.draw.aaline(screen, (150,150,150), network.nodes[key].pos, network.nodes[node].pos)
+				pygame.draw.aaline(screen, (255,255,255), network.nodes[key].pos, network.nodes[node].pos)
 
 		if network.path:
 			for i in range(0, len(network.path)-1):
@@ -89,7 +86,13 @@ def main():
 			screen.blit(text, textRect)
 
 		mouse_position = pygame.mouse.get_pos()
-		network.update(mouse_position, mouse_down, mouse_click)
+		if mouse_click:
+			for index, button in enumerate(buttons):
+				if button.check_click(mouse_position):
+					network.state = index
+					network.start, network.path = None, None
+					mouse_click = False
+		network.update(mouse_position, mouse_down, mouse_click, click_type)
 		mouse_down, mouse_click = False, False
 
 		pygame.display.update()
