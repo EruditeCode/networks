@@ -6,6 +6,7 @@ class Node:
 		self.pos = (x, y)
 		self.radius = radius
 		self.connections = connections
+		self.weights = {node: 0 for node in connections}
 		self.is_mobile = False
 
 	def update_position(self, point):
@@ -26,3 +27,4 @@ class Node:
 		for i in range(len(point_1)):
 			s += ((point_1[i] - point_2[i]) ** 2)
 		return s ** 0.5
+
