@@ -61,10 +61,8 @@ class Network:
 
 	def add_or_remove_edge(self, mouse_position, click_type):
 		if click_type == 0 and self.start != self.select:
-			if self.select not in self.nodes[self.start].connections:
-				self.nodes[self.start].connections.append(self.select)
-			if self.start not in self.nodes[self.select].connections:
-				self.nodes[self.select].connections.append(self.start)
+			self.add_edge_to_connections(self.start, self.select)
+			self.add_edge_to_connections(self.select, self.start)
 			self.start = None
 		elif click_type == 1 and self.start != self.select:
 			self.remove_edge_from_connections(self.start, self.select)
@@ -74,6 +72,10 @@ class Network:
 	def remove_edge_from_connections(self, node_start, node_end):
 		if node_start in self.nodes[node_end].connections:
 			self.nodes[node_end].connections.remove(node_start)
+
+	def add_edge_to_connections(self, node_start, node_end):
+		if node_end not in self.nodes[node_start].connections:
+			self.nodes[node_start].connections.append(node_end)
 
 	def search(self, start, end):
 		queue, visited = deque([start]), []
